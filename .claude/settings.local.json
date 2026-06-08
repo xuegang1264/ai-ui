@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(yarn add *)",
+      "Bash(yarn remove *)",
+      "Bash(yarn dev *)",
+      "Bash(npx playwright-core@latest *)",
+      "Bash(curl -s http://localhost:5174/)",
+      "Bash(yarn build *)",
+      "Bash(grep -n 'inheritAttrs\\\\|useAttrs\\\\|$attrs' node_modules/element-plus/es/components/table/src/table.vue.mjs)",
+      "Bash(grep -n 'inheritAttrs\\\\|useAttrs\\\\|v-bind=\"$attrs\"' node_modules/element-plus/es/components/table/src/table.vue_vue_type_script_lang.mjs)",
+      "Bash(xargs grep *)",
+      "WebFetch(domain:localhost)",
+      "Bash(curl -s \"https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json\")",
+      "Bash(curl -s \"https://geo.datav.aliyun.com/areas_v3/bound/320000_full.json\")",
+      "Bash(curl -s \"https://geo.datav.aliyun.com/areas_v3/bound/320100_full.json\")",
+      "Bash(curl -s \"https://geo.datav.aliyun.com/areas_v3/bound/320111_full.json\")",
+      "mcp__ide__executeCode",
+      "Bash(python3 *)"
+    ]
+  }
+}
