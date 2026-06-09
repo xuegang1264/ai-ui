@@ -4,6 +4,8 @@ import localforage from 'localforage'
 import { defaultModules as homeDefault } from '../data/defaultModules'
 import { defaultModules as miaoqingDefault } from '../data/miaoqing'
 import { defaultModules as shangqingDefault } from '../data/shangqing'
+import { defaultModules as chongqingDefault } from '../data/chongqing'
+import { defaultModules as zaiqingDefault } from '../data/zaiqing'
 
 const DEFAULT_WORKSPACE_KEY = 'grid-modules'
 
@@ -11,12 +13,16 @@ const WORKSPACE_KEYS = {
   home: 'grid-modules',
   miaoqing: 'miaoqing',
   shangqing: 'shangqing',
+  chongqing: 'chongqing',
+  zaiqing: 'zaiqing',
 }
 
 const DEFAULT_DATA_MAP = {
   home: homeDefault,
   miaoqing: miaoqingDefault,
   shangqing: shangqingDefault,
+  chongqing: chongqingDefault,
+  zaiqing: zaiqingDefault,
 }
 
 localforage.config({
@@ -38,41 +44,36 @@ export const useGridStore = defineStore('grid', () => {
 
   async function switchWorkspace(workspace) {
     const key = getStorageKey(workspace)
+    console.log(`[gridStore] 切换工作区: ${workspace}, key: ${key}`)
     currentWorkspace.value = workspace
     try {
       const saved = await localforage.getItem(key)
+      // 如果等待期间用户又切换了别的工��区，丢弃本次结果
+      if (currentWorkspace.value !== workspace) {
+        console.log(`[gridStore] 工作区已变更，放弃 ${workspace} 的加载结果`)
+        return
+      }
+      console.log(`[gridStore] 从 IndexedDB 加载 ${key}, 数据条数:`, saved?.length ?? 0)
       if (saved && Array.isArray(saved) && saved.length > 0) {
         modules.value = saved
+        console.log(`[gridStore] 使用 IndexedDB 数据, 模块数:`, saved.length)
       } else {
         const fallback = DEFAULT_DATA_MAP[workspace]
         modules.value = fallback ? JSON.parse(JSON.stringify(fallback)) : []
+        console.log(`[gridStore] 使用 fallback 数据, 模块数:`, modules.value.length)
         if (fallback) {
           await localforage.setItem(key, JSON.parse(JSON.stringify(fallback)))
+          console.log(`[gridStore] fallback 已写入 IndexedDB: ${key}`)
         }
       }
     } catch (e) {
-      console.error(`从 IndexedDB 加载 ${key} 失败:`, e)
+      console.error(`[gridStore] 从 IndexedDB 加载 ${key} 失败:`, e)
+      if (currentWorkspace.value !== workspace) return
       const fallback = DEFAULT_DATA_MAP[workspace]
       modules.value = fallback ? JSON.parse(JSON.stringify(fallback)) : []
     }
+    initialized.value = true
   }
-
-  localforage.getItem(DEFAULT_WORKSPACE_KEY).then(async (saved) => {
-    if (saved && Array.isArray(saved) && saved.length > 0) {
-      modules.value = saved
-    } else {
-      const fallback = homeDefault
-      modules.value = JSON.parse(JSON.stringify(fallback))
-      await localforage.setItem(DEFAULT_WORKSPACE_KEY, JSON.parse(JSON.stringify(fallback)))
-    }
-    initialized.value = true
-  }).catch(async (e) => {
-    console.error('从 IndexedDB 加载 modules 失败:', e)
-    const fallback = homeDefault
-    modules.value = JSON.parse(JSON.stringify(fallback))
-    await localforage.setItem(DEFAULT_WORKSPACE_KEY, JSON.parse(JSON.stringify(fallback)))
-    initialized.value = true
-  })
 
   // layoutItems 必须是 ref（可写），v-model:layout 才能双向绑定
   const layoutItems = computed(() =>
@@ -101,18 +102,21 @@ export const useGridStore = defineStore('grid', () => {
         mod.layout.h = item.h
       }
     })
-    // 同步到 IndexedDB（先深拷贝解除 Vue 响应式代理，否则结构化克隆会失败）
-    localforage.setItem(getStorageKey(currentWorkspace.value), JSON.parse(JSON.stringify(modules.value))).catch((error) => {
-      console.error('保存 modules 到 IndexedDB 失败:', error)
+    const key = getStorageKey(currentWorkspace.value)
+    console.log(`[gridStore] updateLayout 保存到 IndexedDB: ${key}, 模块数:`, modules.value.length)
+    localforage.setItem(key, JSON.parse(JSON.stringify(modules.value))).catch((error) => {
+      console.error('[gridStore] updateLayout 保存失败:', error)
     })
   }
 
   async function saveCurrentModules() {
     const key = getStorageKey(currentWorkspace.value)
+    console.log(`[gridStore] saveCurrentModules 保存到 IndexedDB: ${key}, 模块数:`, modules.value.length)
     try {
       await localforage.setItem(key, JSON.parse(JSON.stringify(modules.value)))
+      console.log(`[gridStore] saveCurrentModules 保存成功: ${key}`)
     } catch (error) {
-      console.error('保存 modules 到 IndexedDB 失败:', error)
+      console.error('[gridStore] saveCurrentModules 保存失败:', error)
     }
   }
 

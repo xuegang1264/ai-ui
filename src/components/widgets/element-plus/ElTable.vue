@@ -11,7 +11,7 @@ const props = defineProps({
   border: { type: Boolean, default: false },
   size: { type: String, default: 'small' },
   height: { type: [String, Number], default: undefined },
-  queryKey: { type: String, required: true },
+  queryKey: { type: String, default: '' },
 })
 
 const queryStore = useQueryStore()

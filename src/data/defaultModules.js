@@ -5,7 +5,7 @@ export const defaultModules = [
     "layout": {
       "x": 0,
       "y": 0,
-      "w": 16,
+      "w": 13,
       "h": 15,
       "draggable": true,
       "resizable": true
@@ -66,8 +66,8 @@ export const defaultModules = [
     "layout": {
       "x": 0,
       "y": 15,
-      "w": 16,
-      "h": 20,
+      "w": 13,
+      "h": 18,
       "draggable": true,
       "resizable": true
     },
@@ -92,8 +92,8 @@ export const defaultModules = [
     "instanceId": "c",
     "layout": {
       "x": 0,
-      "y": 35,
-      "w": 16,
+      "y": 33,
+      "w": 13,
       "h": 14,
       "draggable": true,
       "resizable": true
@@ -152,10 +152,10 @@ export const defaultModules = [
     "stableKey": "grid-item",
     "instanceId": "d",
     "layout": {
-      "x": 44,
+      "x": 47,
       "y": 0,
-      "w": 16,
-      "h": 15,
+      "w": 13,
+      "h": 14,
       "draggable": true,
       "resizable": true
     },
@@ -211,48 +211,11 @@ export const defaultModules = [
   },
   {
     "stableKey": "grid-item",
-    "instanceId": "e",
-    "layout": {
-      "x": 16,
-      "y": 0,
-      "w": 28,
-      "h": 74,
-      "draggable": true,
-      "resizable": true
-    },
-    "props": {
-      "title": "全国业务分布"
-    },
-    "style": {
-      "background": "var(--surface)",
-      "borderRadius": "12px"
-    },
-    "runtime": {
-      "visible": true,
-      "zIndex": 1,
-      "loading": false,
-      "data": null
-    },
-    "children": [
-      {
-        "stableKey": "MapView",
-        "instanceId": "e-1",
-        "parentInstanceId": "e",
-        "props": {},
-        "style": {
-          "flex": 1
-        }
-      }
-    ],
-    "direction": "row"
-  },
-  {
-    "stableKey": "grid-item",
     "instanceId": "f",
     "layout": {
       "x": 0,
-      "y": 49,
-      "w": 16,
+      "y": 47,
+      "w": 13,
       "h": 22,
       "draggable": true,
       "resizable": true
@@ -337,9 +300,9 @@ export const defaultModules = [
     "instanceId": "g",
     "layout": {
       "x": 0,
-      "y": 71,
-      "w": 16,
-      "h": 29,
+      "y": 69,
+      "w": 13,
+      "h": 31,
       "draggable": true,
       "resizable": true
     },
@@ -475,10 +438,10 @@ export const defaultModules = [
     "stableKey": "grid-item",
     "instanceId": "h",
     "layout": {
-      "x": 44,
-      "y": 15,
-      "w": 16,
-      "h": 85,
+      "x": 47,
+      "y": 14,
+      "w": 13,
+      "h": 86,
       "draggable": true,
       "resizable": true
     },
@@ -751,9 +714,9 @@ export const defaultModules = [
     "stableKey": "grid-item",
     "instanceId": "i",
     "layout": {
-      "x": 16,
+      "x": 13,
       "y": 74,
-      "w": 14,
+      "w": 16,
       "h": 26,
       "draggable": true,
       "resizable": true
@@ -771,16 +734,31 @@ export const defaultModules = [
       "loading": false,
       "data": null
     },
-    "children": [],
+    "children": [
+      {
+        "stableKey": "TextView",
+        "instanceId": "i-1",
+        "parentInstanceId": "i",
+        "props": {
+          "content": "2026 年 5 月中旬，江苏省冬小麦进入灌浆关键期，全省小麦生产<strong style=\"color:#409EFF\">整体态势向好、丰产基础坚实</strong>，同时面临病虫、墒情、气象等多重风险，需精准施策筑牢夏粮稳产防线。\n\n苗情方面，<strong style=\"color:#67C23A\">长势结构持续优化，优质群体占比扩大</strong>，长势优田块占比达 55%，弱苗转化成效显著，旺长苗风险可控，预估总产量稳中有升，产量支撑能力显著增强。\n\n虫情方面，病虫呈 <strong style=\"color:#E6A23C\">\"早发、快升、北病南虫、局部偏重\"</strong> 态势，蚜虫、白粉病、赤霉病等进入高发期，防控压力集中，需抢抓关键窗口期推进 <strong style=\"color:#F56C6C\">\"一喷三防\"</strong>。\n\n墒情方面，<strong style=\"color:#909399\">区域差异显著</strong>，呈现 \"南湿北干\" 格局，江淮、苏南及沿江地区土壤偏湿有渍涝隐患，淮北苏北局部地块存在轻旱风险，需分类做好排涝降湿与抗旱补墒。\n\n气象方面，干热风、局部强对流、局部连阴雨等风险并存，易引发倒伏、早衰及病害加重。各地需聚焦 <strong style=\"color:#409EFF\">保穗数、增粒重、防早衰、防倒伏</strong> 核心目标，统筹田间管理、病虫防控与灾害防御，全力保障夏粮丰产丰收。",
+          "format": "rich",
+          "align": "left",
+          "size": "normal"
+        },
+        "style": {
+          "flex": 1
+        }
+      }
+    ],
     "direction": "row"
   },
   {
     "stableKey": "grid-item",
     "instanceId": "j",
     "layout": {
-      "x": 30,
+      "x": 29,
       "y": 74,
-      "w": 14,
+      "w": 18,
       "h": 26,
       "draggable": true,
       "resizable": true
@@ -857,6 +835,43 @@ export const defaultModules = [
           "size": "small",
           "stripe": true
         },
+        "style": {
+          "flex": 1
+        }
+      }
+    ],
+    "direction": "row"
+  },
+  {
+    "stableKey": "grid-item",
+    "instanceId": "m",
+    "layout": {
+      "x": 13,
+      "y": 0,
+      "w": 34,
+      "h": 74,
+      "draggable": true,
+      "resizable": true
+    },
+    "props": {
+      "title": "地图"
+    },
+    "style": {
+      "background": "var(--surface)",
+      "borderRadius": "12px"
+    },
+    "runtime": {
+      "visible": true,
+      "zIndex": 1,
+      "loading": false,
+      "data": null
+    },
+    "children": [
+      {
+        "stableKey": "MapView",
+        "instanceId": "m-1",
+        "parentInstanceId": "m",
+        "props": {},
         "style": {
           "flex": 1
         }

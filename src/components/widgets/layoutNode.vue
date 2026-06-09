@@ -40,7 +40,7 @@ const containerStyle = computed(() => ({
       <component
         :is="widgetMap[child.stableKey]"
         v-if="widgetMap[child.stableKey]"
-        v-bind="{ ...child.props, children: child.children }"
+        v-bind="{ ...child.props, ...(child.stableKey === 'LayoutNode' && child.children?.length ? { children: child.children } : {}) }"
         :style="child.style"
         class="layout-node-child"
       />

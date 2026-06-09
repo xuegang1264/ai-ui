@@ -10,7 +10,6 @@ const props = defineProps({
   direction: { type: String, default: 'column' },
   textDirection: { type: String, default: 'column' },
 })
-console.log('props', props)
 const displayItems = computed(() => {
   if (props.items && props.items.length > 0) {
     return props.items

@@ -32,9 +32,14 @@ function resize() {
 }
 
 onMounted(() => {
-  init()
   ro = new ResizeObserver(() => {
-    resize()
+    const el = chartRef.value
+    if (!el || el.clientWidth === 0 || el.clientHeight === 0) return
+    if (!chart) {
+      init()
+    } else {
+      resize()
+    }
   })
   ro.observe(chartRef.value)
 })

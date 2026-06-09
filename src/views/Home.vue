@@ -131,12 +131,16 @@ const WORKSPACE_KEY_MAP = {
   home: 'grid-modules',
   miaoqing: 'miaoqing',
   shangqing: 'shangqing',
+  chongqing: 'chongqing',
+  zaiqing: 'zaiqing',
 }
 
 const WORKSPACE_NAME_MAP = {
   home: '首页',
   miaoqing: '苗情',
   shangqing: '墒情',
+  chongqing: '虫情',
+  zaiqing: '灾情',
 }
 
 function onNavContextMenu(e, workspace) {
@@ -210,7 +214,7 @@ async function handleNavDelete() {
   try {
     await localforage.setItem(key, [])
     if (gridStore.currentWorkspace === workspace) {
-      gridStore.modules.value = []
+      gridStore.modules = []
     }
   } catch (e) {
     console.error(`清空 ${key} 失败:`, e)
@@ -222,6 +226,9 @@ onMounted(() => {
   document.addEventListener('click', closeContextMenu)
   document.addEventListener('click', closeNavContextMenu)
   document.addEventListener('keydown', onKeydown)
+  if (!gridStore.initialized) {
+    gridStore.switchWorkspace('home')
+  }
 })
 onUnmounted(() => {
   document.removeEventListener('click', closeContextMenu)
@@ -284,6 +291,20 @@ setTimeout(() => console.log('gridStore.layoutItems:', gridStore.layoutItems), 1
             @click="handleSwitchWorkspace('shangqing')"
             @contextmenu="onNavContextMenu($event, 'shangqing')"
           >墒情</a>
+          <a
+            class="header-nav-item"
+            :class="{ active: gridStore.currentWorkspace === 'chongqing' }"
+            href="javascript:void(0)"
+            @click="handleSwitchWorkspace('chongqing')"
+            @contextmenu="onNavContextMenu($event, 'chongqing')"
+          >虫情</a>
+          <a
+            class="header-nav-item"
+            :class="{ active: gridStore.currentWorkspace === 'zaiqing' }"
+            href="javascript:void(0)"
+            @click="handleSwitchWorkspace('zaiqing')"
+            @contextmenu="onNavContextMenu($event, 'zaiqing')"
+          >灾情</a>
         </nav>
         <button
           class="edit-btn"
@@ -352,7 +373,7 @@ setTimeout(() => console.log('gridStore.layoutItems:', gridStore.layoutItems), 1
                   <component
                     :is="widgetMap[child.stableKey]"
                     v-if="widgetMap[child.stableKey]"
-                    v-bind="{ ...child.props, children: child.children }"
+                    v-bind="{ ...child.props, ...(child.stableKey === 'LayoutNode' && child.children?.length ? { children: child.children } : {}) }"
                     style="width: 100%; height: 100%;"
                   />
                   <div v-else class="child-fallback" style="width: 100%; height: 100%;">

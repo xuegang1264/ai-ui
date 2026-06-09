@@ -19,9 +19,9 @@ const WORKSPACE_KEY_MAP = {
   home: 'grid-modules',
   miaoqing: 'miaoqing',
   shangqing: 'shangqing',
+  chongqing: 'chongqing',
+  zaiqing: 'zaiqing',
 }
-
-console.log("*******************", gridStore.modules)
 
 function renderMarkdown(text) {
   if (!text) return ''
@@ -34,6 +34,67 @@ function scrollToBottom() {
     const el = scrollRef.value
     if (el) el.scrollTop = el.scrollHeight
   })
+}
+
+/**
+ * 容错 JSON 解析：先走原生 JSON.parse，失败时自动修复
+ * AI 常见的两类错误：
+ * 1. 字符串值里包含实际换行符（未转义的 \n）
+ * 2. 字符串值里包含未转义的英文双引号
+ *
+ * 对问题 2 采用启发式判断：当在字符串值内遇到 " 时，
+ * 检查其后第一个非空白字符是否为 JSON 结构符（, } ] :）。
+ * 若不是，则判定为字符串内的未转义引号，自动补转义。
+ */
+function safeJsonParse(str) {
+  try {
+    return JSON.parse(str)
+  } catch {}
+
+  let fixed = ''
+  let inString = false
+  let escaped = false
+
+  for (let i = 0; i < str.length; i++) {
+    const char = str[i]
+
+    if (escaped) {
+      fixed += char
+      escaped = false
+      continue
+    }
+
+    if (char === '\\') {
+      fixed += char
+      escaped = true
+      continue
+    }
+
+    if (char === '"') {
+      if (inString) {
+        let j = i + 1
+        while (j < str.length && /\s/.test(str[j])) j++
+        const next = str[j]
+        const isStructural = next === ',' || next === '}' || next === ']' || next === ':'
+        if (!isStructural && next !== undefined) {
+          fixed += '\\"'
+          continue
+        }
+      }
+      inString = !inString
+      fixed += char
+      continue
+    }
+
+    if (inString && (char === '\n' || char === '\r')) {
+      fixed += '\\n'
+      continue
+    }
+
+    fixed += char
+  }
+
+  return JSON.parse(fixed)
 }
 
 // 递归深合并对象（数组直接替换，不合并）
@@ -123,8 +184,9 @@ async function handleSend() {
           console.log(`[${tag}] tagContent:`, tagContent)
           if (tag === 'add-grid' || tag === 'add-grid-map' || tag === 'add-grid-child' || tag === 'add-grid-child-map') {
             try {
-              const parsed = JSON.parse(tagContent)
+              const parsed = safeJsonParse(tagContent)
               if (tag === 'add-grid' || tag === 'add-grid-map') {
+                console.log(`[${tag}] 添加模块:`, parsed)
                 gridStore.modules.push(parsed)
               } else if (tag === 'add-grid-child') {
                 const parent = findModuleInTree(gridStore.modules, parsed.parentInstanceId)
@@ -157,7 +219,7 @@ async function handleSend() {
             }
           } else if (tag === 'update-grid') {
             try {
-              const parsed = JSON.parse(tagContent)
+              const parsed = safeJsonParse(tagContent)
               const idx = gridStore.modules.findIndex(m => m.instanceId === parsed.instanceId)
               if (idx !== -1) {
                 gridStore.modules.splice(idx, 1, parsed)
@@ -169,7 +231,7 @@ async function handleSend() {
             }
           } else if (tag === 'update-grid-child') {
             try {
-              const parsed = JSON.parse(tagContent)
+              const parsed = safeJsonParse(tagContent)
               const loc = findModuleLocation(gridStore.modules, parsed.instanceId)
               if (loc) {
                 loc.array.splice(loc.index, 1, parsed)
@@ -181,7 +243,7 @@ async function handleSend() {
             }
           } else if (tag === 'patch-grid-child') {
             try {
-              const patches = JSON.parse(tagContent)
+              const patches = safeJsonParse(tagContent)
               for (const patch of patches) {
                 const child = findModuleInTree(gridStore.modules, patch.instanceId)
                 if (child) {
@@ -196,7 +258,7 @@ async function handleSend() {
             }
           } else if (tag === 'map-action') {
             try {
-              const parsed = JSON.parse(tagContent)
+              const parsed = safeJsonParse(tagContent)
               mapCommandStore.dispatch(parsed)
             } catch (e) {
               console.error(`[${tag}] JSON 解析失败:`, e, tagContent)
