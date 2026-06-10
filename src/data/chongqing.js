@@ -318,7 +318,17 @@ export const defaultModules = [
       "loading": false,
       "data": null
     },
-    "children": [],
+    "children": [
+      {
+        "stableKey": "Map",
+        "instanceId": "d-1",
+        "parentInstanceId": "d",
+        "props": {},
+        "style": {
+          "flex": 1
+        }
+      }
+    ],
     "direction": "row"
   },
   {

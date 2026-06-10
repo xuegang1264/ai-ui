@@ -34,6 +34,7 @@ const isRow = computed(() => props.direction === 'row')
       v-for="(item, idx) in displayItems"
       :key="idx"
       class="kv-item"
+      :style="item.width ? { width: item.width, flex: '0 0 auto' } : undefined"
     >
       <div v-if="item.icon" class="kv-icon">
         <div v-if="item.icon.startsWith('<')" v-html="item.icon" class="kv-icon__svg"></div>
@@ -58,12 +59,15 @@ const isRow = computed(() => props.direction === 'row')
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: var(--space-1);
   width: 100%;
   border-radius: 8px;
   background: var(--bg);
   box-sizing: border-box;
   border: 1px solid var(--border);
+}
+
+.kv-layout:not(.kv-layout--row) {
+  gap: var(--space-1);
 }
 
 .kv-layout--row {

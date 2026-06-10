@@ -854,7 +854,7 @@ export const defaultModules = [
       "resizable": true
     },
     "props": {
-      "title": "地图"
+      "title": ""
     },
     "style": {
       "background": "var(--surface)",
