@@ -138,8 +138,8 @@ function findModuleLocation(tree, instanceId) {
 }
 
 // 状态机 + 缓存：匹配 <add-grid>、<add-grid-child>、<delete-instanceId>、<update-grid>、<update-grid-child>、<patch-grid-child>
-const CONFIG_TAGS = ['add-grid', 'add-grid-map', 'add-grid-child', 'add-grid-child-map', 'delete-instanceId', 'update-grid', 'update-grid-child', 'patch-grid-child', 'map-action']
-const OPEN_TAG_RE = new RegExp(`<(add-grid|add-grid-map|add-grid-child|add-grid-child-map|delete-instanceId|update-grid|update-grid-child|patch-grid-child|map-action)>`)
+const CONFIG_TAGS = ['add-grid', 'add-grid-child', 'delete-instanceId', 'update-grid', 'update-grid-child', 'patch-grid-child', 'map-action']
+const OPEN_TAG_RE = new RegExp(`<(add-grid|add-grid-child|delete-instanceId|update-grid|update-grid-child|patch-grid-child|map-action)>`)
 const MAX_TAG_LEN = Math.max(...CONFIG_TAGS.map(t => t.length)) + 1
 
 // 返回 buffer 末尾可安全显示的长度（排除可能截断在未完成标签里的部分）
@@ -182,10 +182,10 @@ async function handleSend() {
           if (idx === -1) break          // 闭合标签还没来，全部缓存
           const tagContent = buf.slice(0, idx).trim()
           console.log(`[${tag}] tagContent:`, tagContent)
-          if (tag === 'add-grid' || tag === 'add-grid-map' || tag === 'add-grid-child' || tag === 'add-grid-child-map') {
+          if (tag === 'add-grid' || tag === 'add-grid-child') {
             try {
               const parsed = safeJsonParse(tagContent)
-              if (tag === 'add-grid' || tag === 'add-grid-map') {
+              if (tag === 'add-grid') {
                 console.log(`[${tag}] 添加模块:`, parsed)
                 gridStore.modules.push(parsed)
               } else if (tag === 'add-grid-child') {
@@ -195,15 +195,6 @@ async function handleSend() {
                   parent.children.push(parsed)
                 } else {
                   console.warn(`[add-grid-child] 未找到 parentInstanceId: ${parsed.parentInstanceId}`)
-                }
-              } else if (tag === 'add-grid-child-map') {
-                const parent = findModuleInTree(gridStore.modules, parsed.parentInstanceId)
-                if (parent) {
-                  if (!parent.children) parent.children = []
-                  if (parsed.stableKey === 'Map') parsed.stableKey = 'MapView'
-                  parent.children.push(parsed)
-                } else {
-                  console.warn(`[add-grid-child-map] 未找到 parentInstanceId: ${parsed.parentInstanceId}`)
                 }
               }
             } catch (e) {

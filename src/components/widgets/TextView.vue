@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue'
+import { ElScrollbar } from 'element-plus'
 
 const props = defineProps({
   content: { type: String, default: '' },
@@ -34,8 +35,10 @@ const alignStyle = computed(() => ({
 
 <template>
   <div class="text-view" :class="sizeClass" :style="alignStyle">
-    <div v-if="isRich" class="text-view__body" v-html="content" />
-    <div v-else class="text-view__body" v-html="plainHtml" />
+    <ElScrollbar>
+      <div v-if="isRich" class="text-view__body" v-html="content" />
+      <div v-else class="text-view__body" v-html="plainHtml" />
+    </ElScrollbar>
   </div>
 </template>
 
@@ -43,7 +46,6 @@ const alignStyle = computed(() => ({
 .text-view {
   width: 100%;
   height: 100%;
-  overflow: auto;
   color: var(--text);
   line-height: 1.75;
 }

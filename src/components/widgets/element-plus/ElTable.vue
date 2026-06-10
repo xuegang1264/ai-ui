@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import { ElTable, ElTableColumn } from 'element-plus'
+import { ElTable, ElTableColumn, ElScrollbar } from 'element-plus'
 import { useQueryStore } from '../../../stores/queryStore.js'
 
 const props = defineProps({
@@ -36,30 +36,31 @@ const displayData = computed(() => {
 </script>
 
 <template>
-  <div style="width: 100%; padding: var(--space-4) var(--space-1);  border-radius: var(--border-radius); box-sizing: border-box;">
-    <ElTable
-    class="el-table--custom"
-    :data="displayData"
-    :stripe="props.stripe"
-    :border="props.border"
-    :size="props.size"
-    :height="props.height"
-    style="width: 100%; --el-table-header-bg-color: var(--accent-bg); --el-table-header-text-color: var(--text-h);"
-  >
-    <ElTableColumn
-      v-for="col in props.columns"
-      :key="col.prop"
-      :prop="col.prop"
-      :label="col.label"
-      :width="col.width"
-      :min-width="col.minWidth"
-      :formatter="col.formatter"
-    >
-      <template v-if="col.slot" #default="scope">
-        <slot :name="col.slot" :row="scope.row" :index="scope.$index" />
-      </template>
-    </ElTableColumn>
-  </ElTable>
+  <div style="width: 100%; height: 100%; padding: var(--space-4) var(--space-1);  border-radius: var(--border-radius); box-sizing: border-box; overflow: hidden;">
+    <ElScrollbar style="height: 100%;">
+      <ElTable
+        class="el-table--custom"
+        :data="displayData"
+        :stripe="props.stripe"
+        :border="props.border"
+        :size="props.size"
+        style="width: 100%; --el-table-header-bg-color: var(--accent-bg); --el-table-header-text-color: var(--text-h);"
+      >
+        <ElTableColumn
+          v-for="col in props.columns"
+          :key="col.prop"
+          :prop="col.prop"
+          :label="col.label"
+          :width="col.width"
+          :min-width="col.minWidth"
+          :formatter="col.formatter"
+        >
+          <template v-if="col.slot" #default="scope">
+            <slot :name="col.slot" :row="scope.row" :index="scope.$index" />
+          </template>
+        </ElTableColumn>
+      </ElTable>
+    </ElScrollbar>
   </div>
 </template>
 

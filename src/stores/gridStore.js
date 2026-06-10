@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import localforage from 'localforage'
 import { defaultModules as homeDefault } from '../data/defaultModules'
 import { defaultModules as miaoqingDefault } from '../data/miaoqing'
@@ -46,6 +46,9 @@ export const useGridStore = defineStore('grid', () => {
     const key = getStorageKey(workspace)
     console.log(`[gridStore] 切换工作区: ${workspace}, key: ${key}`)
     currentWorkspace.value = workspace
+    initialized.value = false
+    modules.value = []
+    await nextTick()
     try {
       const saved = await localforage.getItem(key)
       // 如果等待期间用户又切换了别的工��区，丢弃本次结果

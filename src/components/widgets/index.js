@@ -14,6 +14,7 @@ export const widgetMap = {
   ElTable,
   ElCard,
   ElForm,
+  Map: MapView,
   MapView,
   KvLayout,
   LayoutNode,

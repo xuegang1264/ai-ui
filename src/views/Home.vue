@@ -414,7 +414,7 @@ setTimeout(() => console.log('gridStore.layoutItems:', gridStore.layoutItems), 1
 
     <!-- 模块编辑弹框 -->
     <div v-if="editModalVisible" class="edit-modal-overlay" @click="closeEditModal">
-      <div class="edit-modal" @click.stop>
+      <div class="edit-modal" @click.stop style="width: 900px;">
         <div class="edit-modal-header">
           <span class="edit-modal-title">编辑模块</span>
           <button class="edit-modal-close" @click="closeEditModal">&times;</button>
@@ -436,7 +436,7 @@ setTimeout(() => console.log('gridStore.layoutItems:', gridStore.layoutItems), 1
 
     <!-- 工作区编辑弹框 -->
     <div v-if="editWorkspaceModalVisible" class="edit-modal-overlay" @click="closeEditWorkspaceModal">
-      <div class="edit-modal" @click.stop>
+      <div class="edit-modal" @click.stop style="width: 900px;">
         <div class="edit-modal-header">
           <span class="edit-modal-title">编辑 {{ WORKSPACE_NAME_MAP[editWorkspaceTarget] }} 布局</span>
           <button class="edit-modal-close" @click="closeEditWorkspaceModal">&times;</button>
@@ -649,7 +649,7 @@ setTimeout(() => console.log('gridStore.layoutItems:', gridStore.layoutItems), 1
 
 /* ========== Grid Item ========== */
 :deep(.vgl-layout) {
-  /* height: 100%; */
+  height: 100%;
   overflow-y: auto;
 }
 
