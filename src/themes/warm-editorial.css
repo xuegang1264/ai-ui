@@ -1,0 +1,26 @@
+/* === Theme: Warm Editorial (默认主题) === */
+[data-theme="warm-editorial"] {
+  --bg: oklch(97% 0.008 75);
+  --surface: oklch(100% 0 0);
+  --text-h: oklch(22% 0.02 260);
+  --text: oklch(40% 0.03 260);
+  --text-muted: oklch(58% 0.025 260);
+  --accent: oklch(48% 0.11 185);
+  --accent-light: oklch(95% 0.02 185);
+  --accent-bg: oklch(96% 0.015 185);
+  --border: oklch(89% 0.015 75);
+  --border-light: oklch(93% 0.012 75);
+  --shadow:
+    oklch(25% 0.02 260 / 0.04) 0 4px 24px -4px,
+    oklch(25% 0.02 260 / 0.02) 0 1px 3px -1px;
+  --surface-hover: oklch(95% 0.01 260);
+
+  --radius-card: 8px;
+  --radius-btn: 6px;
+  --radius-badge: 4px;
+
+  --page-bg-image: none;
+
+  --font-display: "Noto Serif SC", "Source Han Serif SC", "STSong", "SimSun", serif;
+  --font-body: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", sans-serif;
+}

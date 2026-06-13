@@ -1,14 +1,88 @@
 <script setup>
 import { GridLayout, GridItem } from 'grid-layout-plus'
 import { useGridStore } from '../stores/gridStore'
+import { useMenuStore } from '../stores/menuStore'
 import ChatBox from '../components/ai-chat/ChatBox.vue'
 import { widgetMap } from '../components/widgets'
 import MonacoEditor from '../components/monaco-editor/index.vue'
 import { ref, onMounted, onUnmounted, nextTick, provide } from 'vue'
-import localforage from 'localforage'
+import { useThemeStore } from '../stores/themeStore'
 
 const gridStore = useGridStore()
+const menuStore = useMenuStore()
+const themeStore = useThemeStore()
 provide('widgetMap', widgetMap)
+
+// 新增菜单
+const addingMenu = ref(false)
+const newMenuName = ref('')
+const newMenuInputRef = ref(null)
+
+async function startAddMenu() {
+  addingMenu.value = true
+  newMenuName.value = ''
+  await nextTick()
+  newMenuInputRef.value?.focus()
+}
+
+function cancelAddMenu() {
+  addingMenu.value = false
+  newMenuName.value = ''
+}
+
+async function confirmAddMenu() {
+  const name = newMenuName.value.trim()
+  if (!name) {
+    newMenuInputRef.value?.focus()
+    return
+  }
+  const newId = await menuStore.addMenu(name)
+  await gridStore.switchWorkspace(newId)
+  addingMenu.value = false
+  newMenuName.value = ''
+}
+
+function onNewMenuKeydown(e) {
+  if (e.key === 'Enter') {
+    confirmAddMenu()
+  } else if (e.key === 'Escape') {
+    cancelAddMenu()
+  }
+}
+
+// 重命名菜单
+const renamingMenuId = ref('')
+const renamingMenuName = ref('')
+const renameMenuInputRef = ref(null)
+
+async function startRenameMenu(menuId) {
+  renamingMenuId.value = menuId
+  renamingMenuName.value = getMenuName(menuId)
+  await nextTick()
+  renameMenuInputRef.value?.focus()
+}
+
+function cancelRenameMenu() {
+  renamingMenuId.value = ''
+  renamingMenuName.value = ''
+}
+
+async function confirmRenameMenu() {
+  const name = renamingMenuName.value.trim()
+  if (name && renamingMenuId.value) {
+    await menuStore.renameMenu(renamingMenuId.value, name)
+  }
+  renamingMenuId.value = ''
+  renamingMenuName.value = ''
+}
+
+function onRenameMenuKeydown(e) {
+  if (e.key === 'Enter') {
+    confirmRenameMenu()
+  } else if (e.key === 'Escape') {
+    cancelRenameMenu()
+  }
+}
 const rowHeight = ref(30)
 const layoutEditable = ref(false)
 
@@ -19,11 +93,12 @@ function toggleLayoutEditable() {
   }
 }
 
-function handleSwitchWorkspace(workspace) {
+async function handleSwitchMenu(menuId) {
   if (chatBoxRef.value?.loading) {
     return
   }
-  gridStore.switchWorkspace(workspace)
+  await menuStore.switchMenu(menuId)
+  await gridStore.switchWorkspace(menuId)
 }
 const drawerOpen = ref(false)
 const sidebarWrapperRef = ref(null)
@@ -92,14 +167,9 @@ async function handleSaveEdit() {
     if (idx !== -1) {
       // 使用 splice 确保响应式更新
       gridStore.modules.splice(idx, 1, parsed)
-      // 手动触发一次保存到 IndexedDB，根据当前工作区选择对应键
+      // 手动触发一次保存到 IndexedDB
       if (gridStore.initialized) {
-        try {
-          const key = WORKSPACE_KEY_MAP[gridStore.currentWorkspace] ?? 'grid-modules'
-          await localforage.setItem(key, JSON.parse(JSON.stringify(gridStore.modules)))
-        } catch (e) {
-          console.error('保存 modules 到 IndexedDB 失败:', e)
-        }
+        await gridStore.saveCurrentModules()
       }
     }
     editModalVisible.value = false
@@ -127,20 +197,12 @@ const navContextmenuVisible = ref(false)
 const navContextmenuPos = ref({ x: 0, y: 0 })
 const navContextmenuWorkspace = ref(null)
 
-const WORKSPACE_KEY_MAP = {
-  home: 'grid-modules',
-  miaoqing: 'miaoqing',
-  shangqing: 'shangqing',
-  chongqing: 'chongqing',
-  zaiqing: 'zaiqing',
+function getMenuName(menuId) {
+  return menuStore.menus.find((m) => m.id === menuId)?.name ?? menuId
 }
 
-const WORKSPACE_NAME_MAP = {
-  home: '首页',
-  miaoqing: '苗情',
-  shangqing: '墒情',
-  chongqing: '虫情',
-  zaiqing: '灾情',
+function isDefaultMenu(menuId) {
+  return menuStore.menus.find((m) => m.id === menuId)?.isDefault ?? false
 }
 
 function onNavContextMenu(e, workspace) {
@@ -162,20 +224,19 @@ const editWorkspaceTarget = ref(null)
 const editWorkspaceJson = ref('')
 
 async function handleNavEdit() {
-  const workspace = navContextmenuWorkspace.value
-  editWorkspaceTarget.value = workspace
-  const key = WORKSPACE_KEY_MAP[workspace]
+  const menuId = navContextmenuWorkspace.value
+  editWorkspaceTarget.value = menuId
   let data = []
-  if (gridStore.currentWorkspace === workspace) {
+  if (gridStore.currentWorkspace === menuId) {
     data = gridStore.modules
   } else {
     try {
-      const saved = await localforage.getItem(key)
+      const saved = await gridStore.loadRawModules(menuId)
       if (saved && Array.isArray(saved)) {
         data = saved
       }
     } catch (e) {
-      console.error(`读取 ${key} 失败:`, e)
+      console.error(`读取 ${menuId} 布局失败:`, e)
     }
   }
   editWorkspaceJson.value = JSON.stringify(data, null, 2)
@@ -190,10 +251,9 @@ async function handleSaveWorkspaceEdit() {
       alert('数据必须是数组格式')
       return
     }
-    const workspace = editWorkspaceTarget.value
-    const key = WORKSPACE_KEY_MAP[workspace]
-    await localforage.setItem(key, JSON.parse(JSON.stringify(parsed)))
-    if (gridStore.currentWorkspace === workspace) {
+    const menuId = editWorkspaceTarget.value
+    await gridStore.saveRawModules(menuId, parsed)
+    if (gridStore.currentWorkspace === menuId) {
       gridStore.modules = parsed
     }
     editWorkspaceModalVisible.value = false
@@ -209,25 +269,68 @@ function closeEditWorkspaceModal() {
 }
 
 async function handleNavDelete() {
-  const workspace = navContextmenuWorkspace.value
-  const key = WORKSPACE_KEY_MAP[workspace]
-  try {
-    await localforage.setItem(key, [])
-    if (gridStore.currentWorkspace === workspace) {
-      gridStore.modules = []
-    }
-  } catch (e) {
-    console.error(`清空 ${key} 失败:`, e)
+  const menuId = navContextmenuWorkspace.value
+  if (isDefaultMenu(menuId)) {
+    closeNavContextMenu()
+    return
   }
+
+  const wasCurrent = gridStore.currentWorkspace === menuId
+  await gridStore.removeWorkspace(menuId)
+  await menuStore.deleteMenu(menuId)
+
+  if (wasCurrent) {
+    const newMenuId = menuStore.currentMenuId
+    if (newMenuId) {
+      await gridStore.switchWorkspace(newMenuId)
+    } else {
+      gridStore.modules = []
+      gridStore.initialized = false
+      gridStore.currentWorkspace = ''
+    }
+  }
+
   closeNavContextMenu()
 }
 
-onMounted(() => {
+async function handleSendTo() {
+  const menuId = navContextmenuWorkspace.value
+  if (!menuId || isDefaultMenu(menuId)) {
+    closeNavContextMenu()
+    return
+  }
+
+  let data = []
+  if (gridStore.currentWorkspace === menuId) {
+    data = gridStore.modules
+  } else {
+    try {
+      const saved = await gridStore.loadRawModules(menuId)
+      if (saved && Array.isArray(saved)) {
+        data = saved
+      }
+    } catch (e) {
+      console.error(`读取 ${menuId} 布局失败:`, e)
+    }
+  }
+
+  console.log('[发送至] 菜单布局数据:', menuId, data)
+  // TODO: 实现发送菜单布局给其他人的逻辑
+  closeNavContextMenu()
+}
+
+onMounted(async () => {
   document.addEventListener('click', closeContextMenu)
   document.addEventListener('click', closeNavContextMenu)
   document.addEventListener('keydown', onKeydown)
-  if (!gridStore.initialized) {
-    gridStore.switchWorkspace('home')
+
+  if (!menuStore.initialized) {
+    await menuStore.initMenus()
+  }
+
+  const targetMenu = menuStore.currentMenuId || menuStore.menus[0]?.id
+  if (targetMenu && !gridStore.initialized) {
+    await gridStore.switchWorkspace(targetMenu)
   }
 })
 onUnmounted(() => {
@@ -271,41 +374,49 @@ setTimeout(() => console.log('gridStore.layoutItems:', gridStore.layoutItems), 1
         <!-- <span class="header-subtitle">2023 — 2026</span> -->
         <nav class="header-nav">
           <a
+            v-for="menu in menuStore.menus"
+            :key="menu.id"
             class="header-nav-item"
-            :class="{ active: gridStore.currentWorkspace === 'home' }"
+            :class="{ active: menuStore.currentMenuId === menu.id }"
             href="javascript:void(0)"
-            @click="handleSwitchWorkspace('home')"
-            @contextmenu="onNavContextMenu($event, 'home')"
-          >首页</a>
-          <a
-            class="header-nav-item"
-            :class="{ active: gridStore.currentWorkspace === 'miaoqing' }"
-            href="javascript:void(0)"
-            @click="handleSwitchWorkspace('miaoqing')"
-            @contextmenu="onNavContextMenu($event, 'miaoqing')"
-          >苗情</a>
-          <a
-            class="header-nav-item"
-            :class="{ active: gridStore.currentWorkspace === 'shangqing' }"
-            href="javascript:void(0)"
-            @click="handleSwitchWorkspace('shangqing')"
-            @contextmenu="onNavContextMenu($event, 'shangqing')"
-          >墒情</a>
-          <a
-            class="header-nav-item"
-            :class="{ active: gridStore.currentWorkspace === 'chongqing' }"
-            href="javascript:void(0)"
-            @click="handleSwitchWorkspace('chongqing')"
-            @contextmenu="onNavContextMenu($event, 'chongqing')"
-          >虫情</a>
-          <a
-            class="header-nav-item"
-            :class="{ active: gridStore.currentWorkspace === 'zaiqing' }"
-            href="javascript:void(0)"
-            @click="handleSwitchWorkspace('zaiqing')"
-            @contextmenu="onNavContextMenu($event, 'zaiqing')"
-          >灾情</a>
+            @click="handleSwitchMenu(menu.id)"
+            @contextmenu="onNavContextMenu($event, menu.id)"
+          >
+            <input
+              v-if="renamingMenuId === menu.id"
+              ref="renameMenuInputRef"
+              v-model="renamingMenuName"
+              type="text"
+              class="rename-menu-input"
+              @keydown="onRenameMenuKeydown"
+              @blur="confirmRenameMenu"
+              @click.stop
+            />
+            <span v-else>{{ menu.name }}</span>
+          </a>
+
+          <div v-if="addingMenu" class="add-menu-form" @click.stop>
+            <input
+              ref="newMenuInputRef"
+              v-model="newMenuName"
+              type="text"
+              class="add-menu-input"
+              placeholder="菜单名称"
+              @keydown="onNewMenuKeydown"
+            />
+            <button class="add-menu-btn add-menu-btn--confirm" @click="confirmAddMenu">确认</button>
+            <button class="add-menu-btn" @click="cancelAddMenu">取消</button>
+          </div>
+          <button
+            v-else
+            class="header-nav-item add-menu-trigger"
+            @click="startAddMenu"
+            title="添加菜单"
+          >+</button>
         </nav>
+        <select class="theme-select" v-model="themeStore.currentTheme">
+          <option v-for="t in themeStore.themes" :key="t.key" :value="t.key">{{ t.label }}</option>
+        </select>
         <button
           class="edit-btn"
           :class="{ active: layoutEditable }"
@@ -409,7 +520,21 @@ setTimeout(() => console.log('gridStore.layoutItems:', gridStore.layoutItems), 1
       @click.stop
     >
       <div class="context-menu-item" @click="handleNavEdit">编辑</div>
-      <div class="context-menu-item context-menu-item--danger" @click="handleNavDelete">删除</div>
+      <div
+        v-if="!isDefaultMenu(navContextmenuWorkspace)"
+        class="context-menu-item"
+        @click="startRenameMenu(navContextmenuWorkspace); closeNavContextMenu()"
+      >重命名</div>
+      <div
+        v-if="!isDefaultMenu(navContextmenuWorkspace)"
+        class="context-menu-item"
+        @click="handleSendTo"
+      >发送至</div>
+      <div
+        v-if="!isDefaultMenu(navContextmenuWorkspace)"
+        class="context-menu-item context-menu-item--danger"
+        @click="handleNavDelete"
+      >删除</div>
     </div>
 
     <!-- 模块编辑弹框 -->
@@ -438,7 +563,7 @@ setTimeout(() => console.log('gridStore.layoutItems:', gridStore.layoutItems), 1
     <div v-if="editWorkspaceModalVisible" class="edit-modal-overlay" @click="closeEditWorkspaceModal">
       <div class="edit-modal" @click.stop style="width: 900px;">
         <div class="edit-modal-header">
-          <span class="edit-modal-title">编辑 {{ WORKSPACE_NAME_MAP[editWorkspaceTarget] }} 布局</span>
+          <span class="edit-modal-title">编辑 {{ getMenuName(editWorkspaceTarget) }} 布局</span>
           <button class="edit-modal-close" @click="closeEditWorkspaceModal">&times;</button>
         </div>
         <div class="edit-modal-body">
@@ -464,6 +589,11 @@ setTimeout(() => console.log('gridStore.layoutItems:', gridStore.layoutItems), 1
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
+  background: var(--bg);
+  background-image: var(--page-bg-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 /* ========== Header ========== */
@@ -546,11 +676,119 @@ setTimeout(() => console.log('gridStore.layoutItems:', gridStore.layoutItems), 1
   border-radius: 1px;
 }
 
+.rename-menu-input {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-btn);
+  padding: 2px 6px;
+  width: 100px;
+  outline: none;
+}
+
+.add-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  margin-left: 2px;
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px dashed var(--border);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0.7;
+}
+
+.add-menu-trigger:hover {
+  opacity: 1;
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.add-menu-form {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 2px 4px;
+  margin-left: 2px;
+}
+
+.add-menu-input {
+  font-size: 0.8rem;
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-btn);
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  width: 100px;
+  transition: border-color 0.2s;
+}
+
+.add-menu-input:focus {
+  border-color: var(--accent);
+}
+
+.add-menu-btn {
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 3px 7px;
+  border-radius: var(--radius-btn);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.add-menu-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.add-menu-btn--confirm {
+  background: var(--accent);
+  color: var(--surface);
+  border-color: var(--accent);
+}
+
+.add-menu-btn--confirm:hover {
+  opacity: 0.9;
+}
+
+.theme-select {
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 6px 10px;
+  border-radius: var(--radius-btn);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.theme-select:focus {
+  border-color: var(--accent);
+}
+
 .edit-btn {
   font-size: 0.8rem;
   font-weight: 600;
   padding: 6px 14px;
-  border-radius: 6px;
+  border-radius: var(--radius-btn);
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--text-muted);
@@ -637,7 +875,7 @@ setTimeout(() => console.log('gridStore.layoutItems:', gridStore.layoutItems), 1
   left: 0;
   top: var(--space-2);
   bottom: var(--space-2);
-  width: 410px;
+  width: 310px;
   transform: translateX(-100%);
   transition: transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
   z-index: 102;
@@ -665,6 +903,7 @@ setTimeout(() => console.log('gridStore.layoutItems:', gridStore.layoutItems), 1
   flex-direction: column;
   box-shadow: var(--shadow);
   border: 1px solid var(--border-light);
+  border-radius: var(--radius-card);
   box-sizing: border-box;
 }
 
@@ -678,7 +917,7 @@ setTimeout(() => console.log('gridStore.layoutItems:', gridStore.layoutItems), 1
   font-size: 0.65rem;
   font-weight: 600;
   padding: 2px 6px;
-  border-radius: 0 0 0 4px;
+  border-radius: 0 0 0 var(--radius-badge);
   pointer-events: none;
   line-height: 1.4;
 }
@@ -711,7 +950,7 @@ setTimeout(() => console.log('gridStore.layoutItems:', gridStore.layoutItems), 1
   z-index: 9999;
   background: var(--surface);
   border: 1px solid var(--border-light);
-  border-radius: 6px;
+  border-radius: var(--radius-card);
   box-shadow: var(--shadow);
   padding: 4px 0;
   min-width: 100px;
@@ -726,7 +965,7 @@ setTimeout(() => console.log('gridStore.layoutItems:', gridStore.layoutItems), 1
 }
 
 .context-menu-item:hover {
-  background: var(--surface-hover, #f5f5f5);
+  background: var(--surface-hover);
 }
 
 .context-menu-item--danger {
@@ -752,7 +991,7 @@ setTimeout(() => console.log('gridStore.layoutItems:', gridStore.layoutItems), 1
   width: 80vw;
   height: 80vh;
   background: var(--surface);
-  border-radius: 8px;
+  border-radius: var(--radius-card);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   display: flex;
   flex-direction: column;
@@ -807,7 +1046,7 @@ setTimeout(() => console.log('gridStore.layoutItems:', gridStore.layoutItems), 1
   font-size: 0.85rem;
   font-weight: 500;
   padding: 8px 20px;
-  border-radius: 6px;
+  border-radius: var(--radius-btn);
   border: 1px solid var(--border);
   cursor: pointer;
   transition: all 0.2s;

@@ -2,7 +2,6 @@
 import { ref, nextTick } from 'vue'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
-import localforage from 'localforage'
 import { askStream } from '@/api'
 import { useGridStore } from '@/stores/gridStore'
 import { useMapCommandStore } from '@/stores/mapCommandStore'
@@ -14,14 +13,6 @@ const gridStore = useGridStore()
 const scrollRef = ref(null)
 const mapCommandStore = useMapCommandStore()
 const inputRef = ref(null)
-
-const WORKSPACE_KEY_MAP = {
-  home: 'grid-modules',
-  miaoqing: 'miaoqing',
-  shangqing: 'shangqing',
-  chongqing: 'chongqing',
-  zaiqing: 'zaiqing',
-}
 
 function renderMarkdown(text) {
   if (!text) return ''
@@ -287,12 +278,7 @@ async function handleSend() {
       tag = null
     }
     if (gridStore.initialized) {
-      try {
-        const key = WORKSPACE_KEY_MAP[gridStore.currentWorkspace] ?? 'grid-modules'
-        await localforage.setItem(key, JSON.parse(JSON.stringify(gridStore.modules)))
-      } catch (e) {
-        console.error('保存 modules 到 IndexedDB 失败:', e)
-      }
+      await gridStore.saveCurrentModules()
     }
     loading.value = false
   }

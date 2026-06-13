@@ -82,6 +82,13 @@ const legendItems = ref(
   }))
 )
 
+const isSatellite = ref(false)
+
+function toggleBaseMap() {
+  isSatellite.value = !isSatellite.value
+  olMap?.switchBaseMap(isSatellite.value ? 'satellite' : 'vector')
+}
+
 const legendAllChecked = ref(true)
 
 function updateLegendAllChecked() {
@@ -140,7 +147,7 @@ async function loadShangqingPoints() {
       growCrops: [],
       levels: [],
       online: [0, 1],
-      regionCode: currentRegion.code,
+      regionCode: currentRegion.code.toString().replace(/0+$/, ''),
     })
     if (res?.code !== 200 || !Array.isArray(res?.detailInfo)) return
 
@@ -198,7 +205,7 @@ async function loadInsectPoints() {
 
   try {
     const res = await listDevicePositionBySourceAndType({
-      regionCode: currentRegion.code,
+      regionCode: currentRegion.code.toString().replace(/0+$/, ''),
     })
     if (res?.code !== 200 || !Array.isArray(res?.detailInfo)) return
 
@@ -332,7 +339,7 @@ watch(currentLevel, async (newVal) => {
     `currentLevel变化: ${currentLevel.value}, 地图层级: ${zoom}, 区域code: ${currentRegion?.code || '无'}, breadcrumb:`,
     breadcrumb.value
   )
-  if (newVal !== 'village') {
+  if (newVal !== 'village' && newVal !== 'town') {
     await Promise.all([
       loadShangqingPoints(),
       loadInsectPoints(),
@@ -1111,6 +1118,15 @@ defineExpose({
     <!-- 提示信息 -->
     <div v-if="toastVisible" class="map-toast">{{ toastMsg }}</div>
 
+    <!-- 底图切换按钮 -->
+    <button
+      class="map-base-toggle"
+      :class="{ satellite: isSatellite }"
+      @click="toggleBaseMap"
+    >
+      {{ isSatellite ? '矢量图' : '卫星图' }}
+    </button>
+
     <!-- 图层切换按钮 -->
     <div v-if="layerTabs.length > 0" class="map-layer-tabs">
       <button
@@ -1227,6 +1243,40 @@ defineExpose({
   margin: 0 2px;
   color: var(--text-muted, #999);
   font-size: 11px;
+}
+
+/* 底图切换按钮 */
+.map-base-toggle {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 100;
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: none;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(4px);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--text, #1a1a1a);
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.map-base-toggle:hover {
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.map-base-toggle.satellite {
+  background: rgba(72, 160, 220, 0.9);
+  color: #fff;
+}
+
+.map-base-toggle.satellite:hover {
+  background: rgba(72, 160, 220, 1);
 }
 
 /* 层级徽章 */

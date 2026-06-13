@@ -1,0 +1,26 @@
+/* === Theme: Ocean Blue === */
+[data-theme="ocean-blue"] {
+  --bg: oklch(96% 0.015 245);
+  --surface: oklch(100% 0 0);
+  --text-h: oklch(22% 0.04 250);
+  --text: oklch(38% 0.05 250);
+  --text-muted: oklch(58% 0.04 250);
+  --accent: oklch(55% 0.14 250);
+  --accent-light: oklch(95% 0.02 250);
+  --accent-bg: oklch(96% 0.015 250);
+  --border: oklch(85% 0.025 245);
+  --border-light: oklch(90% 0.02 245);
+  --shadow:
+    oklch(25% 0.03 245 / 0.06) 0 4px 24px -4px,
+    oklch(25% 0.03 245 / 0.03) 0 1px 3px -1px;
+  --surface-hover: oklch(95% 0.01 245);
+
+  --radius-card: 4px;
+  --radius-btn: 4px;
+  --radius-badge: 2px;
+
+  --page-bg-image: none;
+
+  --font-display: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-body: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+}

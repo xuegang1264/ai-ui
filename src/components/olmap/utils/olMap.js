@@ -239,6 +239,32 @@ class OlMap {
   }
 
   /**
+   * 切换底图类型
+   * @param {string} type - 'vector' | 'satellite'
+   */
+  switchBaseMap(type) {
+    const isSatellite = type === 'satellite'
+    const tileUrl = isSatellite
+      ? 'http://t4.tianditu.gov.cn/DataServer?T=img_w&x={x}&y={y}&l={z}&tk=036825be613a859007fa3004c9e87ddf'
+      : 'http://t4.tianditu.gov.cn/DataServer?T=vec_w&x={x}&y={y}&l={z}&tk=036825be613a859007fa3004c9e87ddf'
+    const tileWZUrl = isSatellite
+      ? 'http://t4.tianditu.gov.cn/DataServer?T=cia_w&x={x}&y={y}&l={z}&tk=036825be613a859007fa3004c9e87ddf'
+      : 'http://t4.tianditu.gov.cn/DataServer?T=cva_w&x={x}&y={y}&l={z}&tk=036825be613a859007fa3004c9e87ddf'
+
+    this.removeLayer('baseTileLayer')
+    this.removeLayer('baseTileWZLayer')
+
+    const newTileLayer = this.layerFactory.createXYZLayer(tileUrl, { zIndex: 0 })
+    const newTileWZLayer = this.layerFactory.createXYZLayer(tileWZUrl, { zIndex: 1 })
+
+    this.map.addLayer(newTileLayer)
+    this.map.addLayer(newTileWZLayer)
+
+    this.layers.set('baseTileLayer', newTileLayer)
+    this.layers.set('baseTileWZLayer', newTileWZLayer)
+  }
+
+  /**
    * 绑定地图事件
    */
   bindMapEvents() {

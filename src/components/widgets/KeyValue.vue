@@ -22,6 +22,12 @@ const displayItems = computed(() => {
   }]
 })
 
+function getLabelStyle(item) {
+  const width = item.labelWidth
+  if (width === undefined || width === null || width === '') return undefined
+  return { width: typeof width === 'number' ? `${width}px` : width }
+}
+
 const isRow = computed(() => props.direction === 'row')
 </script>
 
@@ -44,7 +50,7 @@ const isRow = computed(() => props.direction === 'row')
         class="kv-body"
         :class="{ 'kv-body--row': (item.textDirection || props.textDirection) === 'row' }"
       >
-        <div class="kv-label">{{ item.label }}</div>
+        <div class="kv-label" :style="getLabelStyle(item)">{{ item.label }}</div>
         <div class="kv-value-wrap">
           <span class="kv-value">{{ item.value ?? '-' }}</span>
           <span v-if="item.unit" class="kv-unit">{{ item.unit }}</span>

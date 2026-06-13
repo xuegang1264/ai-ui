@@ -1,5 +1,5 @@
 :root {
-  /* === Color Palette: Warm Editorial === */
+  /* === Color Palette: Warm Editorial (default fallback) === */
   --bg: oklch(97% 0.008 75);
   --surface: oklch(100% 0 0);
   --text-h: oklch(22% 0.02 260);
@@ -13,6 +13,14 @@
   --shadow:
     oklch(25% 0.02 260 / 0.04) 0 4px 24px -4px,
     oklch(25% 0.02 260 / 0.02) 0 1px 3px -1px;
+
+  /* === Shape === */
+  --radius-card: 8px;
+  --radius-btn: 6px;
+  --radius-badge: 4px;
+
+  /* === Background === */
+  --page-bg-image: none;
 
   /* === Typography === */
   --font-display: "Noto Serif SC", "Source Han Serif SC", "STSong", "SimSun", serif;

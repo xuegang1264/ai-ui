@@ -1,0 +1,26 @@
+/* === Theme: Dark Tech === */
+[data-theme="dark-tech"] {
+  --bg: oklch(18% 0.02 260);
+  --surface: oklch(24% 0.025 260);
+  --text-h: oklch(95% 0.01 260);
+  --text: oklch(82% 0.015 260);
+  --text-muted: oklch(60% 0.02 260);
+  --accent: oklch(65% 0.18 265);
+  --accent-light: oklch(30% 0.06 265);
+  --accent-bg: oklch(28% 0.05 265);
+  --border: oklch(35% 0.03 260);
+  --border-light: oklch(30% 0.025 260);
+  --shadow:
+    oklch(0% 0 0 / 0.4) 0 4px 24px -4px,
+    oklch(0% 0 0 / 0.25) 0 1px 3px -1px;
+  --surface-hover: oklch(30% 0.03 260);
+
+  --radius-card: 12px;
+  --radius-btn: 8px;
+  --radius-badge: 6px;
+
+  --page-bg-image: none;
+
+  --font-display: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-body: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+}

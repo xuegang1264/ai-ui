@@ -1,0 +1,26 @@
+/* === Theme: Nature Green === */
+[data-theme="nature-green"] {
+  --bg: oklch(96% 0.015 135);
+  --surface: oklch(100% 0 0);
+  --text-h: oklch(25% 0.04 145);
+  --text: oklch(38% 0.05 145);
+  --text-muted: oklch(55% 0.04 145);
+  --accent: oklch(55% 0.14 145);
+  --accent-light: oklch(95% 0.02 145);
+  --accent-bg: oklch(96% 0.015 145);
+  --border: oklch(85% 0.03 135);
+  --border-light: oklch(90% 0.025 135);
+  --shadow:
+    oklch(25% 0.03 135 / 0.06) 0 4px 24px -4px,
+    oklch(25% 0.03 135 / 0.03) 0 1px 3px -1px;
+  --surface-hover: oklch(95% 0.01 135);
+
+  --radius-card: 16px;
+  --radius-btn: 10px;
+  --radius-badge: 8px;
+
+  --page-bg-image: none;
+
+  --font-display: "Noto Serif SC", "Source Han Serif SC", "STSong", serif;
+  --font-body: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
