@@ -67,7 +67,7 @@ export const defaultModules = [
       "x": 0,
       "y": 15,
       "w": 13,
-      "h": 18,
+      "h": 23,
       "draggable": true,
       "resizable": true
     },
@@ -84,7 +84,16 @@ export const defaultModules = [
       "loading": false,
       "data": null
     },
-    "children": [],
+    "children": [
+      {
+        stableKey: 'AgricultureExpertList',
+        instanceId: 'fixed-agriculture-experts-1',
+        parentInstanceId: 'fixed-agriculture-experts',
+        style: {
+          flex: 1,
+        },
+      },
+    ],
     "direction": "row"
   },
   {
@@ -302,7 +311,7 @@ export const defaultModules = [
       "x": 0,
       "y": 69,
       "w": 13,
-      "h": 31,
+      "h": 26,
       "draggable": true,
       "resizable": true
     },

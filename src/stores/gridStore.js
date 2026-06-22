@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, nextTick, watch } from 'vue'
 import localforage from 'localforage'
 import { defaultModules as homeDefault } from '../data/defaultModules'
 import { defaultModules as miaoqingDefault } from '../data/miaoqing'
@@ -30,6 +30,7 @@ function getStorageKey(workspace) {
 
 export const useGridStore = defineStore('grid', () => {
   const modules = ref([])
+  const previousModuleIds = ref(new Set())
   const initialized = ref(false)
   const currentWorkspace = ref('')
 
@@ -55,6 +56,12 @@ export const useGridStore = defineStore('grid', () => {
     initialized.value = false
     modules.value = []
     await nextTick()
+
+    // 固定菜单切换时先清空 IndexedDB，确保从 src/data 重新加载
+    if (DEFAULT_DATA_MAP[workspace]) {
+      await gridDB.removeItem(key)
+      console.log(`[gridStore] 固定菜单 ${workspace} 已清空 IndexedDB: ${key}`)
+    }
 
     try {
       const saved = await gridDB.getItem(key)
@@ -144,6 +151,24 @@ export const useGridStore = defineStore('grid', () => {
       console.error(`[gridStore] 删除 ${key} 失败:`, e)
     }
   }
+
+  watch(
+    () => modules.value,
+    (newModules) => {
+      const currentIds = new Set(newModules.map((m) => m.instanceId))
+      newModules.forEach((m) => {
+        if (!previousModuleIds.value.has(m.instanceId)) {
+          m.runtime = m.runtime || {}
+          m.runtime.loading = true
+          setTimeout(() => {
+            m.runtime.loading = false
+          }, 400)
+        }
+      })
+      previousModuleIds.value = currentIds
+    },
+    { deep: true, immediate: true }
+  )
 
   return {
     modules,

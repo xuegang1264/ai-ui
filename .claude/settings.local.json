@@ -17,7 +17,8 @@
       "Bash(curl -s \"https://geo.datav.aliyun.com/areas_v3/bound/320111_full.json\")",
       "mcp__ide__executeCode",
       "Bash(python3 *)",
-      "Bash(npx vite *)"
+      "Bash(npx vite *)",
+      "Bash(git checkout *)"
     ]
   }
 }

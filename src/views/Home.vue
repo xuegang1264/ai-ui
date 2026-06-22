@@ -7,6 +7,10 @@ import { widgetMap } from '../components/widgets'
 import MonacoEditor from '../components/monaco-editor/index.vue'
 import { ref, onMounted, onUnmounted, nextTick, provide } from 'vue'
 import { useThemeStore } from '../stores/themeStore'
+import { ElLoading } from 'element-plus'
+import { cloneFixedModule } from '../stores/fixedModules'
+
+const vLoading = ElLoading.directive
 
 const gridStore = useGridStore()
 const menuStore = useMenuStore()
@@ -100,6 +104,63 @@ async function handleSwitchMenu(menuId) {
   await menuStore.switchMenu(menuId)
   await gridStore.switchWorkspace(menuId)
 }
+
+async function openUavTaskDispatch() {
+  if (menuStore.currentMenuId !== 'miaoqing') {
+    await handleSwitchMenu('miaoqing')
+  }
+
+  const targetTitle = '全省苗情动态变化'
+  const modules = gridStore.modules
+  const idx = modules.findIndex(
+    (m) => m.props?.title === targetTitle || m.instanceId === 'a'
+  )
+  if (idx === -1) return
+
+  const target = modules[idx]
+  const replacement = cloneFixedModule('fixed-agriculture-drone-list')
+  if (!replacement) return
+
+  replacement.layout = { ...target.layout }
+  modules.splice(idx, 1, replacement)
+}
+
+function openAgricultureFlightReport() {
+  const modules = gridStore.modules
+  const replacements = [
+    {
+      targetTitle: '全省苗情监测结果管理建议',
+      sourceId: 'fixed-agriculture-flight-estimate',
+    },
+    {
+      targetTitle: '全省苗情监测结果',
+      sourceId: 'fixed-agriculture-flight-advice',
+    },
+    {
+      targetTitle: '江苏省冬小麦综合苗情排名后十区县',
+      sourceId: 'fixed-agriculture-yield-stats',
+    },
+    {
+      targetTitle: '江苏省气温、降水和历史同期对比图',
+      sourceId: 'fixed-agriculture-report-basic',
+    },
+  ]
+
+  for (const { targetTitle, sourceId } of replacements) {
+    const idx = modules.findIndex((m) => m.props?.title === targetTitle)
+    if (idx === -1) continue
+
+    const target = modules[idx]
+    const fresh = cloneFixedModule(sourceId)
+    if (!fresh) continue
+
+    fresh.layout = { ...target.layout }
+    modules.splice(idx, 1, fresh)
+  }
+
+  gridStore.saveCurrentModules()
+}
+
 const drawerOpen = ref(false)
 const sidebarWrapperRef = ref(null)
 const chatBoxRef = ref(null)
@@ -373,27 +434,64 @@ setTimeout(() => console.log('gridStore.layoutItems:', gridStore.layoutItems), 1
         </div>
         <!-- <span class="header-subtitle">2023 — 2026</span> -->
         <nav class="header-nav">
-          <a
+          <template
             v-for="menu in menuStore.menus"
             :key="menu.id"
-            class="header-nav-item"
-            :class="{ active: menuStore.currentMenuId === menu.id }"
-            href="javascript:void(0)"
-            @click="handleSwitchMenu(menu.id)"
-            @contextmenu="onNavContextMenu($event, menu.id)"
           >
-            <input
-              v-if="renamingMenuId === menu.id"
-              ref="renameMenuInputRef"
-              v-model="renamingMenuName"
-              type="text"
-              class="rename-menu-input"
-              @keydown="onRenameMenuKeydown"
-              @blur="confirmRenameMenu"
-              @click.stop
-            />
-            <span v-else>{{ menu.name }}</span>
-          </a>
+            <div
+              v-if="menu.id === 'miaoqing'"
+              class="header-nav-dropdown"
+            >
+              <a
+                class="header-nav-item"
+                :class="{ active: menuStore.currentMenuId === menu.id }"
+                href="javascript:void(0)"
+                @click="handleSwitchMenu(menu.id)"
+                @contextmenu="onNavContextMenu($event, menu.id)"
+              >
+                <input
+                  v-if="renamingMenuId === menu.id"
+                  ref="renameMenuInputRef"
+                  v-model="renamingMenuName"
+                  type="text"
+                  class="rename-menu-input"
+                  @keydown="onRenameMenuKeydown"
+                  @blur="confirmRenameMenu"
+                  @click.stop
+                />
+                <span v-else>{{ menu.name }}</span>
+              </a>
+              <div class="header-nav-dropdown-menu">
+                <button
+                  class="dropdown-item-btn"
+                  type="button"
+                  @click="openUavTaskDispatch"
+                >
+                  无人机任务调度
+                </button>
+              </div>
+            </div>
+            <a
+              v-else
+              class="header-nav-item"
+              :class="{ active: menuStore.currentMenuId === menu.id }"
+              href="javascript:void(0)"
+              @click="handleSwitchMenu(menu.id)"
+              @contextmenu="onNavContextMenu($event, menu.id)"
+            >
+              <input
+                v-if="renamingMenuId === menu.id"
+                ref="renameMenuInputRef"
+                v-model="renamingMenuName"
+                type="text"
+                class="rename-menu-input"
+                @keydown="onRenameMenuKeydown"
+                @blur="confirmRenameMenu"
+                @click.stop
+              />
+              <span v-else>{{ menu.name }}</span>
+            </a>
+          </template>
 
           <div v-if="addingMenu" class="add-menu-form" @click.stop>
             <input
@@ -462,6 +560,7 @@ setTimeout(() => console.log('gridStore.layoutItems:', gridStore.layoutItems), 1
         <div v-if="layoutEditable" class="edit-badge">{{ item.i }}</div>
           <div
             v-if="gridStore.getModuleById(item.i)"
+            v-loading="gridStore.getModuleById(item.i)?.runtime?.loading"
             class="grid-item-wrapper"
             :style="gridStore.getModuleById(item.i).style"
           >
@@ -486,6 +585,7 @@ setTimeout(() => console.log('gridStore.layoutItems:', gridStore.layoutItems), 1
                     v-if="widgetMap[child.stableKey]"
                     v-bind="{ ...child.props, ...(child.stableKey === 'LayoutNode' && child.children?.length ? { children: child.children } : {}) }"
                     style="width: 100%; height: 100%;"
+                    @view-report="openAgricultureFlightReport"
                   />
                   <div v-else class="child-fallback" style="width: 100%; height: 100%;">
                     <div class="child-fallback-key">{{ child.stableKey }}</div>
@@ -674,6 +774,66 @@ setTimeout(() => console.log('gridStore.layoutItems:', gridStore.layoutItems), 1
   height: 2px;
   background: var(--accent);
   border-radius: 1px;
+}
+
+.header-nav-dropdown {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.header-nav-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(-6px);
+  min-width: 160px;
+  padding: var(--space-2);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 100;
+}
+
+/* 填充菜单项与下拉面板之间的 8px 间隙，避免鼠标移动时 hover 中断 */
+.header-nav-dropdown-menu::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 0;
+  right: 0;
+  height: 8px;
+}
+
+.header-nav-dropdown:hover .header-nav-dropdown-menu,
+.header-nav-dropdown-menu:hover {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+
+.dropdown-item-btn {
+  width: 100%;
+  text-align: left;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-btn);
+  border: none;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s, color 0.2s;
+}
+
+.dropdown-item-btn:hover {
+  background: var(--accent-bg);
+  color: var(--accent);
 }
 
 .rename-menu-input {
